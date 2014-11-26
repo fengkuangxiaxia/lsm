@@ -8,8 +8,13 @@
 #include <linux/uaccess.h>
 
 #define MAX_LENGTH 512
+#define MAX_RULE_LENGTH 100
 char controlleddir[256]; 
-char controlledCommand[MAX_LENGTH]; 
+char controlledCommand[MAX_LENGTH];
+
+//规则集，字符串数组
+char controlledRules[MAX_RULE_LENGTH][MAX_LENGTH];
+int ruleNumber = 0;
 
 int enable_flag = 0;
 
@@ -94,6 +99,7 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
 	enable_flag = 1;
 
     //切割字符串
+    
     char* const delim = " "; 
     char *token, *cur = controlledCommand;
     int i = 0;
@@ -107,8 +113,34 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
         i++;
     }  
     
-    printk("Controlleddir name: %s \n", controlleddir);
-    printk("controlledCommand name: %s \n", controlledCommand);
+    //printk("Controlleddir name: %s \n", controlleddir);
+    //printk("controlledCommand name: %s \n", controlledCommand);
+    
+    int flag = 0;
+    for(i = 0; i < ruleNumber; i++) {
+        if (strncmp(controlledRules[i], controlleddir, strlen(controlleddir)) == 0) {
+            memset(controlledRules[i], 0, MAX_LENGTH);
+            strcpy(controlledRules[i], controlleddir);
+            strcat(controlledRules[i], " ");
+            strcat(controlledRules[i], controlledCommand);
+            controlledRules[i][len] = '\0';
+            flag = 1;
+            break;
+        }
+        
+    }
+    if(flag == 0) {
+        strcpy(controlledRules[ruleNumber], controlleddir);
+        strcat(controlledRules[ruleNumber], " ");
+        strcat(controlledRules[ruleNumber], controlledCommand);
+        controlledRules[ruleNumber][len] = '\0';
+        ruleNumber++;
+    }
+
+    for(i = 0; i < ruleNumber; i++) {
+        printk("%s \n", controlledRules[i]);
+    }
+    printk("\n");
 
 	return len;
 }
