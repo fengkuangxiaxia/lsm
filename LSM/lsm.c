@@ -137,20 +137,31 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
         ruleNumber++;
     }
 
+    /*
     for(i = 0; i < ruleNumber; i++) {
         printk("%s \n", controlledRules[i]);
     }
     printk("\n");
-
+    */
 	return len;
 }
 
 
-
+int read_controlleddir(int fd, char *buf, ssize_t len) {
+    if(ruleNumber == 0) {
+        return;
+    }
+    int i;
+    for (i = 0; i < ruleNumber; ++i) {
+        copy_to_user(buf, controlledRules[i], strlen(controlledRules[i]));
+        //printk("%s \n", controlledRules[i]);
+    }
+}
 
 struct file_operations fops = {
 	owner:THIS_MODULE, 
 	write: write_controlleddir, 
+    read: read_controlleddir,
 }; 
 
 static struct security_operations lsm_ops=

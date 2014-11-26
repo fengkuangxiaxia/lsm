@@ -18,6 +18,40 @@ int main(int argc, char *argv[]) {
 		*operation = '\0';
 	}
 	else {
+		if (argc == 2) {
+			//显示当前指令
+			if (strcmp("-ls", argv[1]) == 0) {
+				if (stat("/dev/controlfile",&buf) != 0) {
+					//探测设备文件是否已经创建，如果没有创建，则先创建该设备文件
+					if (system("mknod /dev/controlfile c 123 0") == -1){
+						printf("Cann't create the devive file ! \n");
+						printf("Please check and try again! \n");
+						exit(1);
+					}
+				}
+				fd =open("/dev/controlfile",O_RDWR,S_IRUSR|S_IWUSR);    //打开设备文件
+				if (fd > 0) {
+					/*
+					int flag = 0;
+					flag = read(fd,result,512);
+					while(flag != 0) {    //读取数据
+						printf("%s\n", result);
+						flag = read(fd,result,512);
+					}
+					printf("%s\n", result);
+					*/
+					char temp[1024];
+					memset(temp, 0, 1024);
+					read(fd, temp, 1024);
+					printf("%s\n", temp);
+				}
+				else {
+					perror("can't open /dev/controlfile \n");
+				 	exit (1);
+				}
+				return;
+			}
+		}
 		if (argc == 2){ //控制行为为空，关闭对应程序的保护功能
 			if (strlen(argv[1]) >= 256) {   //容错性检查
 				printf("The controlled path is too long! please check it and try again! \n");
