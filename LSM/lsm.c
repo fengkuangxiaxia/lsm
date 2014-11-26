@@ -153,8 +153,8 @@ int read_controlleddir(int fd, char *buf, ssize_t len) {
     }
     int i;
     for (i = 0; i < ruleNumber; ++i) {
-        copy_to_user(buf, controlledRules[i], strlen(controlledRules[i]));
-        //printk("%s \n", controlledRules[i]);
+        //copy_to_user(buf, controlledRules[i], strlen(controlledRules[i]));
+        printk("%s \n", controlledRules[i]);
     }
 }
 
