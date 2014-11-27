@@ -49,18 +49,18 @@ int main(int argc, char *argv[]) {
 				close(fd);  //关闭设备文件
 				return;
 			}
-		}
-		if (argc == 2){ //控制行为为空，关闭对应程序的保护功能
-			if (strlen(argv[1]) >= 256) {   //容错性检查
-				printf("The controlled path is too long! please check it and try again! \n");
-				exit(1);
+			else {//控制行为为空，关闭对应程序的保护功能
+				if (strlen(argv[1]) >= 256) {   //容错性检查
+					printf("The controlled path is too long! please check it and try again! \n");
+					exit(1);
+				}
+				strcpy(filename, argv[1]);  //获取要控制的程序路径
+				if (stat(filename,&buf) != 0) { //检查要控制的程序是否存在
+					printf("The file(or directory) may not exist! \n");
+					exit(1);
+				}
+				*operation = '\0';
 			}
-			strcpy(filename, argv[1]);  //获取要控制的程序路径
-			if (stat(filename,&buf) != 0) { //检查要控制的程序是否存在
-				printf("The file(or directory) may not exist! \n");
-				exit(1);
-			}
-			*operation = '\0';
 		}
 		else if(argc == 3) {
 			if (strlen(argv[1]) >= 256) {   //容错性检查

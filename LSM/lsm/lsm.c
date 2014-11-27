@@ -7,8 +7,10 @@
 //#include <linux/mm.h>
 #include <linux/uaccess.h>
 
-#define MAX_LENGTH 512
-#define MAX_RULE_LENGTH 100
+#define MAX_LENGTH 512 //单条规则最大长度
+#define MAX_RULE_LENGTH 100 //最大规则数
+#define MAX_AUTHORITY "999\0"//最大权限值
+
 char controlleddir[256]; 
 char controlledCommand[MAX_LENGTH];
 
@@ -116,8 +118,16 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
     
     //printk("Controlleddir name: %s \n", controlleddir);
     //printk("controlledCommand name: %s \n", controlledCommand);
+
+    //未给权限值，表明给予所有权限
+    if(strlen(controlledCommand) == 0) {
+        memset(controlledCommand, 0, MAX_LENGTH);
+        strcpy(controlledCommand, MAX_AUTHORITY);
+        len += strlen(MAX_AUTHORITY);
+    }
     
     int flag = 0;
+    //更新现有规则
     for(i = 0; i < ruleNumber; i++) {
         if (strncmp(controlledRules[i], controlleddir, strlen(controlleddir)) == 0) {
             memset(controlledRules[i], 0, MAX_LENGTH);
@@ -130,6 +140,7 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
         }
         
     }
+    //添加新规则
     if(flag == 0) {
         strcpy(controlledRules[ruleNumber], controlleddir);
         strcat(controlledRules[ruleNumber], " ");
@@ -137,13 +148,6 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
         controlledRules[ruleNumber][len] = '\0';
         ruleNumber++;
     }
-
-    /*
-    for(i = 0; i < ruleNumber; i++) {
-        printk("%s \n", controlledRules[i]);
-    }
-    printk("\n");
-    */
 	return len;
 }
 
