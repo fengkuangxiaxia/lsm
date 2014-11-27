@@ -15,6 +15,7 @@ char controlledCommand[MAX_LENGTH];
 //规则集，字符串数组
 char controlledRules[MAX_RULE_LENGTH][MAX_LENGTH];
 int ruleNumber = 0;
+int copyToUserRuleNumber = -1;
 
 int enable_flag = 0;
 
@@ -151,10 +152,13 @@ int read_controlleddir(int fd, char *buf, ssize_t len) {
     if(ruleNumber == 0) {
         return;
     }
-    int i;
-    for (i = 0; i < ruleNumber; ++i) {
-        //copy_to_user(buf, controlledRules[i], strlen(controlledRules[i]));
-        printk("%s \n", controlledRules[i]);
+    copyToUserRuleNumber++;
+    if(copyToUserRuleNumber == ruleNumber) {
+        copyToUserRuleNumber = -1;
+        copy_to_user(buf, "end", MAX_LENGTH);
+    }
+    else {
+        copy_to_user(buf, controlledRules[copyToUserRuleNumber], strlen(controlledRules[copyToUserRuleNumber]));
     }
 }
 

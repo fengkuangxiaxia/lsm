@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define MAX_LENGTH 512
+
 int main(int argc, char *argv[]) {
 	char filename[256]; //要控制的程序路径
 	char operation[256];    //对程序的控制行为
@@ -31,14 +33,20 @@ int main(int argc, char *argv[]) {
 				}
 				fd =open("/dev/controlfile",O_RDWR,S_IRUSR|S_IWUSR);    //打开设备文件
 				if (fd > 0) {
-					char temp[2];
-					memset(temp, 0, 2);
-					read(fd, temp, 2);
+					char temp[MAX_LENGTH];
+					memset(temp, 0, MAX_LENGTH);
+					read(fd, temp, MAX_LENGTH);
+					while(strcmp("end", temp) != 0) {
+						printf("%s\n", temp);
+						memset(temp, 0, MAX_LENGTH);
+						read(fd, temp, MAX_LENGTH);
+					}
 				}
 				else {
 					perror("can't open /dev/controlfile \n");
 				 	exit (1);
 				}
+				close(fd);  //关闭设备文件
 				return;
 			}
 		}
