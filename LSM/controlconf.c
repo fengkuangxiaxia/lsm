@@ -30,10 +30,57 @@ int main(int argc, char *argv[]) {
 				for(i = 0; i < ruleNumber; i++) {
 					printf("%s\n", currentRules[i]);
 				}
-
 				return;
 			}
-			else {//控制行为为空，关闭对应程序的保护功能
+			else {
+				//导入
+				if (strcmp("-i", argv[1]) == 0) {
+					printf("Please enter input filename!\n");
+					exit(1);
+				}
+				//导出
+				else if (strcmp("-o", argv[1]) == 0) {
+					printf("Please enter output filename!\n");
+					exit(1);
+				}
+				//控制行为为空，关闭对应程序的保护功能
+				else {
+					if (strlen(argv[1]) >= 256) {   //容错性检查
+						printf("The controlled path is too long! please check it and try again! \n");
+						exit(1);
+					}
+					strcpy(filename, argv[1]);  //获取要控制的程序路径
+					if (stat(filename,&buf) != 0) { //检查要控制的程序是否存在
+						printf("The file(or directory) may not exist! \n");
+						exit(1);
+					}
+					*operation = '\0';
+				}
+			}
+		}
+		else if(argc == 3) {
+			//导入
+			if (strcmp("-i", argv[1]) == 0) {
+				printf("input\n");
+				return;
+			}
+			//导出
+			else if (strcmp("-o", argv[1]) == 0) {
+				char currentRules[MAX_RULE_LENGTH][MAX_LENGTH];
+				int ruleNumber = getCurrentRules(currentRules);
+				FILE * w;
+				w = fopen(argv[2], "w");
+				int i;
+				for(i = 0; i < ruleNumber; i++) {
+					//printf("%s\n", currentRules[i]);
+					fputs(currentRules[i], w);
+					fputs("\n", w);
+				}
+				fclose(w);
+				return;
+			}
+			//新增、修改
+			else {
 				if (strlen(argv[1]) >= 256) {   //容错性检查
 					printf("The controlled path is too long! please check it and try again! \n");
 					exit(1);
@@ -43,24 +90,12 @@ int main(int argc, char *argv[]) {
 					printf("The file(or directory) may not exist! \n");
 					exit(1);
 				}
-				*operation = '\0';
+				if (strlen(argv[2]) >= 256) {   //容错性检查
+					printf("The controlled command is too long! please check it and try again! \n");
+					exit(1);
+				}
+				strcpy(operation, argv[2]); //获取控制命令
 			}
-		}
-		else if(argc == 3) {
-			if (strlen(argv[1]) >= 256) {   //容错性检查
-				printf("The controlled path is too long! please check it and try again! \n");
-				exit(1);
-			}
-			strcpy(filename, argv[1]);  //获取要控制的程序路径
-			if (stat(filename,&buf) != 0) { //检查要控制的程序是否存在
-				printf("The file(or directory) may not exist! \n");
-				exit(1);
-			}
-			if (strlen(argv[2]) >= 256) {   //容错性检查
-				printf("The controlled command is too long! please check it and try again! \n");
-				exit(1);
-			}
-			strcpy(operation, argv[2]); //获取控制命令
 		}
 		else {  //参数输入错误，提示正确的命令行参数
 			printf("Commandline parameters are wrong! please check them! \n");
