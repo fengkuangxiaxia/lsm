@@ -61,7 +61,36 @@ int main(int argc, char *argv[]) {
 		else if(argc == 3) {
 			//导入
 			if (strcmp("-i", argv[1]) == 0) {
-				printf("input\n");
+				FILE * r;
+				r = fopen(argv[2], "r");
+				if(r == NULL) {
+					printf("Can not open file!\n");
+					exit(1);
+				}
+				else {
+					char temp[MAX_LENGTH];
+					while(fgets(temp, MAX_LENGTH, r) != NULL) {
+						temp[strlen(temp) - 1] = '\0';
+						if (stat("/dev/controlfile",&buf) != 0) {
+							//探测设备文件是否已经创建，如果没有创建，则先创建该设备文件
+							if (system("mknod /dev/controlfile c 123 0") == -1){
+								printf("Cann't create the devive file ! \n");
+								printf("Please check and try again! \n");
+								exit(1);
+							}
+						}
+						fd = open("/dev/controlfile",O_RDWR,S_IRUSR|S_IWUSR);    //打开设备文件
+						if (fd > 0) {
+							write(fd,temp,strlen(temp));    //写入数据
+						}
+						else {
+							perror("can't open /dev/controlfile \n");
+						 	exit (1);
+						}
+						close(fd);  //关闭设备文件
+					}
+				}
+				fclose(r);
 				return;
 			}
 			//导出
