@@ -6,7 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_LENGTH 512
+#define MAX_LENGTH 512 //单条规则最大长度
+#define MAX_RULE_LENGTH 100 //最大规则数
 
 int main(int argc, char *argv[]) {
 	char filename[256]; //要控制的程序路径
@@ -23,30 +24,13 @@ int main(int argc, char *argv[]) {
 		if (argc == 2) {
 			//显示当前指令
 			if (strcmp("-ls", argv[1]) == 0) {
-				if (stat("/dev/controlfile",&buf) != 0) {
-					//探测设备文件是否已经创建，如果没有创建，则先创建该设备文件
-					if (system("mknod /dev/controlfile c 123 0") == -1){
-						printf("Cann't create the devive file ! \n");
-						printf("Please check and try again! \n");
-						exit(1);
-					}
+				char currentRules[MAX_RULE_LENGTH][MAX_LENGTH];
+				int ruleNumber = getCurrentRules(currentRules);
+				int i;
+				for(i = 0; i < ruleNumber; i++) {
+					printf("%s\n", currentRules[i]);
 				}
-				fd =open("/dev/controlfile",O_RDWR,S_IRUSR|S_IWUSR);    //打开设备文件
-				if (fd > 0) {
-					char temp[MAX_LENGTH];
-					memset(temp, 0, MAX_LENGTH);
-					read(fd, temp, MAX_LENGTH);
-					while(strcmp("end", temp) != 0) {
-						printf("%s\n", temp);
-						memset(temp, 0, MAX_LENGTH);
-						read(fd, temp, MAX_LENGTH);
-					}
-				}
-				else {
-					perror("can't open /dev/controlfile \n");
-				 	exit (1);
-				}
-				close(fd);  //关闭设备文件
+
 				return;
 			}
 			else {//控制行为为空，关闭对应程序的保护功能
@@ -116,5 +100,36 @@ int main(int argc, char *argv[]) {
 	 	exit (1);
 	}
 	close(fd);  //关闭设备文件
+}
+
+int getCurrentRules(char currentRules[MAX_RULE_LENGTH][MAX_LENGTH]) {
+	int fd; //设备文件打开时用到的文件描述符 
+	struct stat buf;    //文件状态结构缓冲区 
+	int len = 0;
+	if (stat("/dev/controlfile",&buf) != 0) {
+		//探测设备文件是否已经创建，如果没有创建，则先创建该设备文件
+		if (system("mknod /dev/controlfile c 123 0") == -1){
+			printf("Cann't create the devive file ! \n");
+			printf("Please check and try again! \n");
+			exit(1);
+		}
+	}
+	fd =open("/dev/controlfile",O_RDWR,S_IRUSR|S_IWUSR);    //打开设备文件
+	if (fd > 0) {
+		char temp[MAX_LENGTH];
+		memset(temp, 0, MAX_LENGTH);
+		read(fd, temp, MAX_LENGTH);
+		while(strcmp("end", temp) != 0) {
+			strncpy(currentRules[len++], temp, MAX_LENGTH);
+			memset(temp, 0, MAX_LENGTH);
+			read(fd, temp, MAX_LENGTH);
+		}
+	}
+	else {
+		perror("can't open /dev/controlfile \n");
+	 	exit (1);
+	}
+	close(fd);  //关闭设备文件
+	return len;
 }
 
