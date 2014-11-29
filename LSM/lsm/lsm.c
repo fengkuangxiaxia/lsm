@@ -4,8 +4,9 @@
 //#include <linux/moduleparam.h>
 #include <linux/security.h>
 #include <linux/fs.h>
-//#include <linux/mm.h>
+#include <linux/mm.h>
 #include <linux/uaccess.h>
+#include <linux/sched.h>
 
 #define MAX_LENGTH 512 //单条规则最大长度
 #define MAX_RULE_LENGTH 100 //最大规则数
@@ -41,6 +42,29 @@ static int get_fullpath(struct dentry *dentry, char *full_path)
 	}
 	strcpy(full_path,local_path);
 	return 0;
+}
+
+static char* get_current_process_full_path() {    
+    if(current->mm) {
+        struct vm_area_struct *vma = current->mm->mmap;
+        while(vma) {
+            if((vma->vm_flags && VM_EXECUTABLE) && vma->vm_file) {
+                char *buffer = kmalloc(PAGE_SIZE, GFP_KERNEL);
+                char *p;
+                memset(buffer, 0, PAGE_SIZE);
+                p = d_path(vma->vm_file->f_dentry, vma->vm_file->f_vfsmnt, buffer, PAGE_SIZE);
+                if(!IS_ERR(p)) {
+                    memmove(buffer, p, strlen(p) + 1);
+                    //printk("%s\n", buffer);
+                    return (char*) buffer;
+                }
+                kfree(buffer);
+                return NULL;
+            }
+            vma = vma->vm_next;
+        }
+    }
+    return NULL;
 }
 
 int myown_check(char *full_name){
@@ -154,6 +178,7 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
 
 int read_controlleddir(int fd, char *buf, ssize_t len) {
     if(ruleNumber == 0) {
+        copy_to_user(buf, "end", MAX_LENGTH);
         return;
     }
     copyToUserRuleNumber++;
@@ -167,7 +192,7 @@ int read_controlleddir(int fd, char *buf, ssize_t len) {
 }
 
 struct file_operations fops = {
-	owner:THIS_MODULE, 
+	owner: THIS_MODULE, 
 	write: write_controlleddir, 
     read: read_controlleddir,
 }; 
