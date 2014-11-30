@@ -10,7 +10,9 @@
 
 #define MAX_LENGTH 512 //单条规则最大长度
 #define MAX_RULE_LENGTH 100 //最大规则数
+
 #define MAX_AUTHORITY "999\0"//最大权限值
+#define REMOVE_AUTHORITY 1//删除权限值
 
 char controlleddir[256]; 
 char controlledCommand[MAX_LENGTH];
@@ -67,47 +69,46 @@ static char* get_current_process_full_path() {
     return NULL;
 }
 
-int myown_check(char *full_name){
-	if (enable_flag == 0)
-		return 0;
-	if (strncmp(full_name, controlleddir,strlen(controlleddir)) == 0)
-	{
-		printk("remove denied of the file: %s \n",full_name);
-		return 1;
-	} 
-	else return 0;
+int check(char* currentProcessFullPath, int authority) {
+    if (enable_flag == 0) {
+        return 0;
+    }
+    int i;
+    for (i = 0; i < ruleNumber; ++i) {
+        if(strncmp(controlledRules[i], currentProcessFullPath, strlen(currentProcessFullPath)) == 0) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static int lsm_inode_rmdir(struct inode *dir, struct dentry *dentry)
 {
-	char full_name[MAX_LENGTH];
-//	printk(KERN_INFO"Function 'inode_rmdir' has been called\n");
-	memset(full_name,0,MAX_LENGTH);
-	get_fullpath(dentry,full_name);
-	if (myown_check(full_name) != 0)
-	{
-		printk("remove denied of the directory: %s \n",full_name);
-		return 1;
-	} 
-	return 0;
+	char* currentProcessFullPath = get_current_process_full_path();
+    
+    if(check(currentProcessFullPath, REMOVE_AUTHORITY) != 0) {
+        printk("remove denied\n");
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 static int lsm_inode_unlink(struct inode *dir, struct dentry *dentry)
 {
-	char full_name[MAX_LENGTH];
-//	printk(KERN_INFO"Function 'inode_unlink' has been called\n");
-	memset(full_name,0,MAX_LENGTH);
-	get_fullpath(dentry,full_name);
-//	printk("fullname:%s  controlleddir:%s \n",full_name,controlleddir);
-	if (myown_check(full_name) != 0)
-	{
-		printk("remove denied of the file: %s \n",full_name);
-		return 1;
-	} 
-	return 0;
+    char* currentProcessFullPath = get_current_process_full_path();
+    
+    if(check(currentProcessFullPath, REMOVE_AUTHORITY) != 0) {
+        printk("remove denied\n");
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
-int write_controlleddir(int fd, char *buf, ssize_t len)
+int write_controlledRules(int fd, char *buf, ssize_t len)
 {
 	
 	if (len == 0){
@@ -176,7 +177,7 @@ int write_controlleddir(int fd, char *buf, ssize_t len)
 }
 
 
-int read_controlleddir(int fd, char *buf, ssize_t len) {
+int read_controlledRules(int fd, char *buf, ssize_t len) {
     if(ruleNumber == 0) {
         copy_to_user(buf, "end", MAX_LENGTH);
         return;
@@ -193,8 +194,8 @@ int read_controlleddir(int fd, char *buf, ssize_t len) {
 
 struct file_operations fops = {
 	owner: THIS_MODULE, 
-	write: write_controlleddir, 
-    read: read_controlleddir,
+	write: write_controlledRules, 
+    read: read_controlledRules,
 }; 
 
 static struct security_operations lsm_ops=
