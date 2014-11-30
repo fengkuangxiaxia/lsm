@@ -76,7 +76,33 @@ int check(char* currentProcessFullPath, int authority) {
     int i;
     for (i = 0; i < ruleNumber; ++i) {
         if(strncmp(controlledRules[i], currentProcessFullPath, strlen(currentProcessFullPath)) == 0) {
-            return 1;
+            //切割字符串
+            char r_authoriy[MAX_LENGTH];
+            char* endptr;
+            char r_path[MAX_LENGTH];
+            strcpy(r_authoriy, controlledRules[i]);
+            char* const delim = " "; 
+            char *token, *cur = r_authoriy;
+            int j = 0;
+            while (token = strsep(&cur, delim)) {  
+                if(j == 0) {
+                    strcpy(r_path, token);
+                }
+                else if(j == 1) {
+                    strcpy(r_authoriy, token);
+                }
+                j++;
+            }
+
+            
+            unsigned long r_authoriy_unsigned_long = simple_strtol(r_authoriy, &endptr, 10);
+
+            if((r_authoriy_unsigned_long & authority) == 0) {
+                return 1;
+            }
+            else {
+                return 0;
+            }
         }
     }
     return 0;
