@@ -139,7 +139,10 @@ int main(int argc, char *argv[]) {
     }
     else {
         *result = '\0';
-        strcat(result, filename);
+        char absolutePath[MAX_LENGTH];
+        realpath(filename, absolutePath);
+
+        strcat(result, absolutePath);
         strcat(result, " ");
         strcat(result, operation);
     }
