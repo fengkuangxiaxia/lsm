@@ -16,6 +16,7 @@
 #define MKDIR_AUTHORITY 2 //创建文件夹权限值
 #define OPEN_AUTHORITY 4 //打开文件权限值
 #define CREATE_AUTHORITY 8 //创建文件权限值
+#define WRITE_AUTHORITY 16 //写文件权限值
 
 
 char controlleddir[256]; 
@@ -166,12 +167,23 @@ static int lsm_inode_create(struct inode *dir, struct dentry *dentry, umode_t mo
 static int lsm_file_permission(struct file *file, int mask) {
     char* currentProcessFullPath = get_current_process_full_path();
 
-    if(check(currentProcessFullPath, OPEN_AUTHORITY) != 0) {
+    /*
+    if(strncmp(currentProcessFullPath, "/home/fengkuangxiaxia/Desktop", strlen("/home/fengkuangxiaxia/Desktop")) == 0) {
+        printk("%s %d\n", currentProcessFullPath, mask);
+    }
+    */
+    
+
+    if((mask == 4) && (check(currentProcessFullPath, OPEN_AUTHORITY) != 0)) {
         printk("open denied\n");
         return 1;
     }
-    else if(check(currentProcessFullPath, CREATE_AUTHORITY) != 0) {
+    else if((mask == 4) && (check(currentProcessFullPath, CREATE_AUTHORITY) != 0)) {
         printk("create denied\n");
+        return 1;
+    }
+    else if((mask == 2) && (check(currentProcessFullPath, WRITE_AUTHORITY) != 0)) {
+        printk("write denied\n");
         return 1;
     }
     else {
