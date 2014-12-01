@@ -13,9 +13,10 @@
 
 #define MAX_AUTHORITY "999\0" //最大权限值
 #define REMOVE_AUTHORITY 1 //删除文件权限值
-#define CREATE_AUTHORITY 2 //创建文件权限值
-#define MKDIR_AUTHORITY 4 //创建文件夹权限值
-#define OPEN_AUTHORITY 8 //打开文件权限值
+#define MKDIR_AUTHORITY 2 //创建文件夹权限值
+#define OPEN_AUTHORITY 4 //打开文件权限值
+#define CREATE_AUTHORITY 8 //创建文件权限值
+
 
 char controlleddir[256]; 
 char controlledCommand[MAX_LENGTH];
@@ -153,7 +154,6 @@ static int lsm_inode_mkdir(struct inode *dir, struct dentry *dentry, umode_t mod
 
 static int lsm_inode_create(struct inode *dir, struct dentry *dentry, umode_t mode) {
     char* currentProcessFullPath = get_current_process_full_path();
-    //printk("%s\n", currentProcessFullPath);
     if(check(currentProcessFullPath, CREATE_AUTHORITY) != 0) {
         printk("create denied\n");
         return 1;
@@ -165,8 +165,13 @@ static int lsm_inode_create(struct inode *dir, struct dentry *dentry, umode_t mo
 
 static int lsm_file_permission(struct file *file, int mask) {
     char* currentProcessFullPath = get_current_process_full_path();
+
     if(check(currentProcessFullPath, OPEN_AUTHORITY) != 0) {
         printk("open denied\n");
+        return 1;
+    }
+    else if(check(currentProcessFullPath, CREATE_AUTHORITY) != 0) {
+        printk("create denied\n");
         return 1;
     }
     else {
