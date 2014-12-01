@@ -2,11 +2,11 @@
 
 int main(int argc, char *argv[]) {
     FILE* fp;
-    if((fp = fopen("./test.txt", "w")) == NULL) {
-        printf("Create fail.\n");
+    if((fp = fopen("./test.txt", "r")) == NULL) {
+        printf("Open fail.\n");
     }
     else {
-        printf("Create sucess.\n");
+        printf("Open sucess.\n");
         fclose(fp);
     }
     return 0;
