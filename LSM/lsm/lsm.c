@@ -11,8 +11,10 @@
 #define MAX_LENGTH 512 //单条规则最大长度
 #define MAX_RULE_LENGTH 100 //最大规则数
 
-#define MAX_AUTHORITY "999\0"//最大权限值
-#define REMOVE_AUTHORITY 1//删除权限值
+#define MAX_AUTHORITY "999\0" //最大权限值
+#define REMOVE_AUTHORITY 1 //删除文件权限值
+#define CREATE_AUTHORITY 2 //创建文件权限值
+#define MKDIR_AUTHORITY 4 //创建文件夹权限值
 
 char controlleddir[256]; 
 char controlledCommand[MAX_LENGTH];
@@ -73,6 +75,10 @@ int check(char* currentProcessFullPath, int authority) {
     if (enable_flag == 0) {
         return 0;
     }
+    else if(currentProcessFullPath == NULL) {
+        printk("currentProcessFullPath is null\n");
+        return 0;
+    }
     int i;
     for (i = 0; i < ruleNumber; ++i) {
         if(strncmp(controlledRules[i], currentProcessFullPath, strlen(currentProcessFullPath)) == 0) {
@@ -108,8 +114,7 @@ int check(char* currentProcessFullPath, int authority) {
     return 0;
 }
 
-static int lsm_inode_rmdir(struct inode *dir, struct dentry *dentry)
-{
+static int lsm_inode_rmdir(struct inode *dir, struct dentry *dentry) {
 	char* currentProcessFullPath = get_current_process_full_path();
     
     if(check(currentProcessFullPath, REMOVE_AUTHORITY) != 0) {
@@ -121,12 +126,35 @@ static int lsm_inode_rmdir(struct inode *dir, struct dentry *dentry)
     }
 }
 
-static int lsm_inode_unlink(struct inode *dir, struct dentry *dentry)
-{
+static int lsm_inode_unlink(struct inode *dir, struct dentry *dentry) {
     char* currentProcessFullPath = get_current_process_full_path();
     
     if(check(currentProcessFullPath, REMOVE_AUTHORITY) != 0) {
         printk("remove denied\n");
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+static int lsm_inode_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode) {
+    char* currentProcessFullPath = get_current_process_full_path();
+    
+    if(check(currentProcessFullPath, MKDIR_AUTHORITY) != 0) {
+        printk("create denied\n");
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+static int lsm_inode_create(struct inode *dir, struct dentry *dentry, umode_t mode) {
+    char* currentProcessFullPath = get_current_process_full_path();
+    //printk("%s\n", currentProcessFullPath);
+    if(check(currentProcessFullPath, CREATE_AUTHORITY) != 0) {
+        printk("create denied\n");
         return 1;
     }
     else {
@@ -226,10 +254,10 @@ struct file_operations fops = {
 
 static struct security_operations lsm_ops=
 {
-	.inode_rmdir = lsm_inode_rmdir,
-	.inode_unlink = lsm_inode_unlink,
-//	.inode_mkdir = lsm_inode_mkdir,
-//	.inode_create = lsm_inode_create,
+	.inode_create = lsm_inode_create,
+    .inode_unlink = lsm_inode_unlink,
+    .inode_mkdir = lsm_inode_mkdir,
+    .inode_rmdir = lsm_inode_rmdir,
 //	.file_alloc_security = lsm_file_alloc,
 //	.file_free_security = lsm_file_free_security,
 //	.file_permission = lsm_file_permission,
