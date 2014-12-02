@@ -165,6 +165,19 @@ static int lsm_inode_create(struct inode *dir, struct dentry *dentry, umode_t mo
     }
 }
 
+
+static int lsm_inode_permission(struct inode *inode, int mask) {
+    char* currentProcessFullPath = get_current_process_full_path();
+    if((mask == 4) && (check(currentProcessFullPath, OPEN_AUTHORITY) != 0)) {
+        printk("open denied\n");
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
+
 static int lsm_file_permission(struct file *file, int mask) {
     char* currentProcessFullPath = get_current_process_full_path();
 
@@ -174,18 +187,16 @@ static int lsm_file_permission(struct file *file, int mask) {
     }
     */
     
-
+    /*
     if((mask == 4) && (check(currentProcessFullPath, OPEN_AUTHORITY) != 0)) {
         printk("open denied\n");
         return -1;
     }
-    /*
     else if((mask == 4) && (check(currentProcessFullPath, CREATE_AUTHORITY) != 0)) {
         printk("create denied\n");
         return -1;
     }
-    */
-    else if((mask == 2) && (check(currentProcessFullPath, WRITE_AUTHORITY) != 0)) {
+    else */if((mask == 2) && (check(currentProcessFullPath, WRITE_AUTHORITY) != 0)) {
         printk("write denied\n");
         return -1;
     }
@@ -303,6 +314,7 @@ static struct security_operations lsm_ops=
     .inode_mkdir = lsm_inode_mkdir,
     .inode_rmdir = lsm_inode_rmdir,
 	.file_permission = lsm_file_permission,
+    .inode_permission = lsm_inode_permission,
     .task_create = lsm_task_create,
 };
 
