@@ -158,7 +158,7 @@ static int lsm_inode_create(struct inode *dir, struct dentry *dentry, umode_t mo
     char* currentProcessFullPath = get_current_process_full_path();
     if(check(currentProcessFullPath, CREATE_AUTHORITY) != 0) {
         printk("create denied\n");
-        return 1;
+        return -1;
     }
     else {
         return 0;
@@ -179,10 +179,12 @@ static int lsm_file_permission(struct file *file, int mask) {
         printk("open denied\n");
         return -1;
     }
+    /*
     else if((mask == 4) && (check(currentProcessFullPath, CREATE_AUTHORITY) != 0)) {
         printk("create denied\n");
         return -1;
     }
+    */
     else if((mask == 2) && (check(currentProcessFullPath, WRITE_AUTHORITY) != 0)) {
         printk("write denied\n");
         return -1;
