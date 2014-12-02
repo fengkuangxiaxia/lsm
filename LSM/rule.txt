@@ -1,0 +1,5 @@
+/home/fengkuangxiaxia/Desktop/test/create/create 55
+/home/fengkuangxiaxia/Desktop/test/exec/exec 31
+/home/fengkuangxiaxia/Desktop/test/open/open 59
+/home/fengkuangxiaxia/Desktop/test/remove/remove 62
+/home/fengkuangxiaxia/Desktop/test/write/write 47

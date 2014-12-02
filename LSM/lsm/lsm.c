@@ -11,7 +11,7 @@
 #define MAX_LENGTH 512 //单条规则最大长度
 #define MAX_RULE_LENGTH 100 //最大规则数
 
-#define MAX_AUTHORITY "999\0" //最大权限值
+#define MAX_AUTHORITY "63\0" //最大权限值
 #define REMOVE_AUTHORITY 1 //删除文件权限值
 #define MKDIR_AUTHORITY 2 //创建文件夹权限值
 #define OPEN_AUTHORITY 4 //打开文件权限值
