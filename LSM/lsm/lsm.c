@@ -17,6 +17,7 @@
 #define OPEN_AUTHORITY 4 //打开文件权限值
 #define CREATE_AUTHORITY 8 //创建文件权限值
 #define WRITE_AUTHORITY 16 //写文件权限值
+#define EXEC_AUTHORITY 32 //执行文件权限值
 
 
 char controlleddir[256]; 
@@ -176,15 +177,27 @@ static int lsm_file_permission(struct file *file, int mask) {
 
     if((mask == 4) && (check(currentProcessFullPath, OPEN_AUTHORITY) != 0)) {
         printk("open denied\n");
-        return 1;
+        return -1;
     }
     else if((mask == 4) && (check(currentProcessFullPath, CREATE_AUTHORITY) != 0)) {
         printk("create denied\n");
-        return 1;
+        return -1;
     }
     else if((mask == 2) && (check(currentProcessFullPath, WRITE_AUTHORITY) != 0)) {
         printk("write denied\n");
-        return 1;
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
+static int lsm_task_create(unsigned long clone_flags) {
+    char* currentProcessFullPath = get_current_process_full_path();
+
+    if(check(currentProcessFullPath, EXEC_AUTHORITY) != 0) {
+        printk("exec denied\n");
+        return -1;
     }
     else {
         return 0;
@@ -287,9 +300,8 @@ static struct security_operations lsm_ops=
     .inode_unlink = lsm_inode_unlink,
     .inode_mkdir = lsm_inode_mkdir,
     .inode_rmdir = lsm_inode_rmdir,
-//	.file_alloc_security = lsm_file_alloc,
-//	.file_free_security = lsm_file_free_security,
 	.file_permission = lsm_file_permission,
+    .task_create = lsm_task_create,
 };
 
 static int secondary=0;
