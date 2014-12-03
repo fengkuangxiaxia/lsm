@@ -11,7 +11,9 @@
 #define MAX_LENGTH 512 //单条规则最大长度
 #define MAX_RULE_LENGTH 100 //最大规则数
 
-#define MAX_AUTHORITY "63\0" //最大权限值
+#define MAX_AUTHORITY "255\0" //最大权限值
+
+//文件访问类
 #define REMOVE_AUTHORITY 1 //删除文件权限值
 #define MKDIR_AUTHORITY 2 //创建文件夹权限值
 #define OPEN_AUTHORITY 4 //打开文件权限值
@@ -19,6 +21,11 @@
 #define WRITE_AUTHORITY 16 //写文件权限值
 #define EXEC_AUTHORITY 32 //执行文件权限值
 
+//通信类
+
+//管理类
+#define MOUNT_AUTHORITY 64 //挂载文件系统权限值
+#define UMOUNT_AUTHORITY 128 //卸载文件系统权限值
 
 char controlleddir[256]; 
 char controlledCommand[MAX_LENGTH];
@@ -75,12 +82,35 @@ static char* get_current_process_full_path() {
     return NULL;
 }
 
+static char* get_process_full_path(struct task_struct * task) {    
+    if(task->mm) {
+        struct vm_area_struct *vma = task->mm->mmap;
+        while(vma) {
+            if((vma->vm_flags && VM_EXECUTABLE) && vma->vm_file) {
+                char *buffer = kmalloc(PAGE_SIZE, GFP_KERNEL);
+                char *p;
+                memset(buffer, 0, PAGE_SIZE);
+                p = d_path(vma->vm_file->f_dentry, vma->vm_file->f_vfsmnt, buffer, PAGE_SIZE);
+                if(!IS_ERR(p)) {
+                    memmove(buffer, p, strlen(p) + 1);
+                    //printk("%s\n", buffer);
+                    return (char*) buffer;
+                }
+                kfree(buffer);
+                return NULL;
+            }
+            vma = vma->vm_next;
+        }
+    }
+    return NULL;
+}
+
 int check(char* currentProcessFullPath, int authority) {
     if (enable_flag == 0) {
         return 0;
     }
     else if(currentProcessFullPath == NULL) {
-        printk("currentProcessFullPath is null\n");
+        //printk("currentProcessFullPath is null\n");
         return 0;
     }
     int i;
@@ -217,6 +247,30 @@ static int lsm_task_create(unsigned long clone_flags) {
     }
 }
 
+static int lsm_sb_mount(const char *dev_name, struct path *path, const char *type, unsigned long flags, void *data) {
+    char* currentProcessFullPath = get_current_process_full_path();
+
+    if(check(currentProcessFullPath, MOUNT_AUTHORITY) != 0) {
+        printk("mount denied\n");
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
+static int lsm_sb_umount(struct vfsmount * mnt, int flags) {
+    char* currentProcessFullPath = get_current_process_full_path();
+
+    if(check(currentProcessFullPath, UMOUNT_AUTHORITY) != 0) {
+        printk("umount denied\n");
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
 int write_controlledRules(int fd, char *buf, ssize_t len)
 {
 	
@@ -316,6 +370,9 @@ static struct security_operations lsm_ops=
 	.file_permission = lsm_file_permission,
     .inode_permission = lsm_inode_permission,
     .task_create = lsm_task_create,
+
+    .sb_mount = lsm_sb_mount,
+    .sb_umount = lsm_sb_umount,
 };
 
 static int secondary=0;
