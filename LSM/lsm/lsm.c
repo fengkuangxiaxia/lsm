@@ -11,7 +11,7 @@
 #define MAX_LENGTH 512 //单条规则最大长度
 #define MAX_RULE_LENGTH 100 //最大规则数
 
-#define MAX_AUTHORITY "2047\0" //最大权限值
+#define MAX_AUTHORITY "4095\0" //最大权限值
 
 //文件访问类
 #define REMOVE_AUTHORITY 1 //删除文件权限值
@@ -25,6 +25,7 @@
 #define SOCKET_CREATE 256 //创建SOCKET权限值
 #define SOCKET_CONNECT 512 //连接SOCKET权限值
 #define SHARED_MEMORY 1024 //共享内存权限值
+#define MESSAGE_QUEUE 2048 //消息队列权限值
 
 //管理类
 #define MOUNT_AUTHORITY 64 //挂载文件系统权限值
@@ -307,6 +308,17 @@ static int lsm_shm_shmat(struct shmid_kernel *shp, char __user *shmaddr, int shm
     }
 }
 
+static int lsm_msg_queue_msgsnd(struct msg_queue *msq, struct msg_msg *msg, int msqflg) {
+    char* currentProcessFullPath = get_current_process_full_path();
+    if(check(currentProcessFullPath, MESSAGE_QUEUE) != 0) {
+        printk("message queue send denied\n");
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
 
 int write_controlledRules(int fd, char *buf, ssize_t len)
 {
@@ -413,6 +425,7 @@ static struct security_operations lsm_ops=
     .socket_create = lsm_socket_create,
     .socket_connect = lsm_socket_connect,
     .shm_shmat = lsm_shm_shmat,
+    .msg_queue_msgsnd = lsm_msg_queue_msgsnd,
 
     .sb_mount = lsm_sb_mount,
     .sb_umount = lsm_sb_umount,
