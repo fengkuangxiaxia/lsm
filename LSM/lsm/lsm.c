@@ -11,7 +11,7 @@
 #define MAX_LENGTH 512 //单条规则最大长度
 #define MAX_RULE_LENGTH 100 //最大规则数
 
-#define MAX_AUTHORITY "255\0" //最大权限值
+#define MAX_AUTHORITY "1023\0" //最大权限值
 
 //文件访问类
 #define REMOVE_AUTHORITY 1 //删除文件权限值
@@ -22,6 +22,8 @@
 #define EXEC_AUTHORITY 32 //执行文件权限值
 
 //通信类
+#define SOCKET_CREATE 256 //创建SOCKET权限值
+#define SOCKET_CONNECT 512 //连接SOCKET权限值
 
 //管理类
 #define MOUNT_AUTHORITY 64 //挂载文件系统权限值
@@ -271,6 +273,30 @@ static int lsm_sb_umount(struct vfsmount * mnt, int flags) {
     }
 }
 
+static int lsm_socket_create(int family, int type, int protocol, int kern) {
+    char* currentProcessFullPath = get_current_process_full_path();
+
+    if(check(currentProcessFullPath, SOCKET_CREATE) != 0) {
+        printk("socket create denied\n");
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
+static int lsm_socket_connect(struct socket *sock, struct sockaddr *address, int addrlen) {
+    char* currentProcessFullPath = get_current_process_full_path();
+
+    if(check(currentProcessFullPath, SOCKET_CONNECT) != 0) {
+        printk("socket connect denied\n");
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
 int write_controlledRules(int fd, char *buf, ssize_t len)
 {
 	
@@ -370,6 +396,9 @@ static struct security_operations lsm_ops=
 	.file_permission = lsm_file_permission,
     .inode_permission = lsm_inode_permission,
     .task_create = lsm_task_create,
+
+    .socket_create = lsm_socket_create,
+    .socket_connect = lsm_socket_connect,
 
     .sb_mount = lsm_sb_mount,
     .sb_umount = lsm_sb_umount,
