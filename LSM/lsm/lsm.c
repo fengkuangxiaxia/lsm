@@ -29,9 +29,6 @@
 #define MOUNT_AUTHORITY 64 //挂载文件系统权限值
 #define UMOUNT_AUTHORITY 128 //卸载文件系统权限值
 
-char controlleddir[256]; 
-char controlledCommand[MAX_LENGTH];
-
 //规则集，字符串数组
 char controlledRules[MAX_RULE_LENGTH][MAX_LENGTH];
 int ruleNumber = 0;
@@ -299,7 +296,9 @@ static int lsm_socket_connect(struct socket *sock, struct sockaddr *address, int
 
 int write_controlledRules(int fd, char *buf, ssize_t len)
 {
-	
+	char controlleddir[256]; 
+    char controlledCommand[MAX_LENGTH];
+
 	if (len == 0){
 		enable_flag = 0;
 		printk("Cancel the protect mechanism sucessfullly! \n");
