@@ -5,3 +5,4 @@
 /home/fengkuangxiaxia/Desktop/test/write/write 47
 /home/fengkuangxiaxia/Desktop/test/socket/server 767
 /home/fengkuangxiaxia/Desktop/test/socket/client 511
+/home/fengkuangxiaxia/Desktop/test/sharedMemory/producer 1023
